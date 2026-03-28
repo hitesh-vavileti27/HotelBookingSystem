@@ -1,29 +1,44 @@
 /**
  * The main entry point for the Hotel Booking application.
- * This class acts as a container for application behavior and 
- * marks the logical boundary of the program.
- *
- * @author Your Name
- * @version 1.0
+ * Updated for Use Case 3: Centralized Inventory Management (HashMap).
  */
 public class HotelBookingApp {
 
-    /**
-     * The main method acts as the entry point of the standalone Java application.
-     * The JVM specifically looks for this method signature to begin execution.
-     * * @param args Command line arguments passed to the application.
-     */
     public static void main(String[] args) {
         
-        // Execution proceeds top to bottom (Application Flow)
-        
-        // Using System.out.println() to send text output to the console
         System.out.println("****************************************");
         System.out.println("  Welcome to the Hotel Booking System!  ");
-        System.out.println("****************************************");
-        System.out.println("Application Name: Hotel Booking App");
-        System.out.println("Version: v1.0");
+        System.out.println("****************************************\n");
+
+        // 1. Initialize Domain Objects 
+        Room singleRoom = new SingleRoom();
+        Room doubleRoom = new DoubleRoom();
+        Room suiteRoom = new SuiteRoom();
+
+        // 2. Initialize Centralized Inventory
+        RoomInventory inventory = new RoomInventory();
         
-        // The application naturally terminates here when it reaches the end of the main method
+        inventory.registerRoom(singleRoom.getRoomType(), 5);
+        inventory.registerRoom(doubleRoom.getRoomType(), 3);
+        inventory.registerRoom(suiteRoom.getRoomType(), 2);
+
+        // 3. Display Domain Details
+        System.out.println("--- ROOM DETAILS OVERVIEW ---");
+        singleRoom.displayDetails();
+        doubleRoom.displayDetails();
+        suiteRoom.displayDetails();
+
+        // 4. Display Initial Inventory State
+        inventory.displayInventory();
+
+        // 5. Simulate a booking
+        System.out.println("\n[System] Simulating a booking for 1 Single Room...");
+        int currentSingleCount = inventory.getAvailability(singleRoom.getRoomType());
+        inventory.updateAvailability(singleRoom.getRoomType(), currentSingleCount - 1);
+
+        System.out.println("[System] Inventory updated successfully.");
+        
+        // Display new inventory state
+        inventory.displayInventory();
     }
 }
