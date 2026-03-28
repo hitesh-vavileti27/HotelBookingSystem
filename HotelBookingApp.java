@@ -8,37 +8,40 @@ public class HotelBookingApp {
 
         Room singleRoom = new SingleRoom();
         RoomInventory inventory = new RoomInventory();
-        inventory.registerRoom(singleRoom.getRoomType(), 5);
+        
+        // DANGER: Only 2 rooms available!
+        inventory.registerRoom(singleRoom.getRoomType(), 2);
 
         BookingQueueService queueService = new BookingQueueService();
         RoomAllocationService allocationService = new RoomAllocationService();
-        CancellationService cancellationService = new CancellationService();
 
-        // 1. Book a room
-        System.out.println("--- BOOKING PHASE ---");
-        Reservation aliceReq = new Reservation("Alice", singleRoom.getRoomType());
-        queueService.addBookingRequest(aliceReq);
-        allocationService.processQueue(queueService, inventory);
+        // 1. 5 Guests all click "Book" at the same time
+        System.out.println("--- MASSIVE USER SURGE (5 Guests, 2 Rooms) ---");
+        queueService.addBookingRequest(new Reservation("Alice", singleRoom.getRoomType()));
+        queueService.addBookingRequest(new Reservation("Bob", singleRoom.getRoomType()));
+        queueService.addBookingRequest(new Reservation("Charlie", singleRoom.getRoomType()));
+        queueService.addBookingRequest(new Reservation("Dave", singleRoom.getRoomType()));
+        queueService.addBookingRequest(new Reservation("Eve", singleRoom.getRoomType()));
+
+        System.out.println("\n--- STARTING CONCURRENT PROCESSORS ---");
         
-        inventory.displayInventory(); // Should be 4 Singles left
+        // 2. Spin up 3 independent threads to process the queue simultaneously
+        Thread t1 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-1");
+        Thread t2 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-2");
+        Thread t3 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-3");
 
-        // 2. Cancel the room (Happy Path)
-        System.out.println("\n--- CANCELLATION PHASE ---");
+        t1.start();
+        t2.start();
+        t3.start();
+
+        // 3. Wait for all threads to finish their work before printing the final inventory
         try {
-            cancellationService.cancelReservation(aliceReq, inventory);
-        } catch (InvalidBookingException e) {
-            System.out.println("[Error] " + e.getMessage());
+            t1.join(); t2.join(); t3.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
-        inventory.displayInventory(); // Should be back to 5 Singles!
-        cancellationService.displayReleasedRooms(); // Should show Alice's released room ID
-
-        // 3. Attempt to double-cancel the room (Error Handling)
-        System.out.println("\n--- ATTEMPTING DOUBLE CANCELLATION ---");
-        try {
-            cancellationService.cancelReservation(aliceReq, inventory);
-        } catch (InvalidBookingException e) {
-            System.out.println("[Gracefully Caught Error] " + e.getMessage());
-        }
+        System.out.println("\n--- FINAL SYSTEM STATE ---");
+        inventory.displayInventory();
     }
 }

@@ -9,32 +9,22 @@ public class BookingQueueService {
         this.requestQueue = new LinkedList<>();
     }
 
-    public void addBookingRequest(Reservation reservation) {
+    // "synchronized" ensures only one thread can add to the queue at a time
+    public synchronized void addBookingRequest(Reservation reservation) {
         requestQueue.offer(reservation);
         System.out.println("[Intake] Received request from " + reservation.getGuestName() + " for a " + reservation.getRequestedRoomType());
     }
 
-    public void displayQueue() {
-        System.out.println("\n--- CURRENT BOOKING QUEUE (FIFO ORDER) ---");
-        if (requestQueue.isEmpty()) {
-            System.out.println("The queue is currently empty.");
-        } else {
-            int position = 1;
-            for (Reservation req : requestQueue) {
-                System.out.println(position + ". " + req.getGuestName() + " -> " + req.getRequestedRoomType());
-                position++;
-            }
-        }
-        System.out.println("------------------------------------------\n");
-    }
-
-    // Retrieves and removes the next request from the front of the queue
-    public Reservation getNextRequest() {
+    // "synchronized" ensures two threads don't accidentally grab the exact same reservation
+    public synchronized Reservation getNextRequest() {
         return requestQueue.poll(); 
     }
 
-    // Checks if there is anyone left in the queue
-    public boolean hasMoreRequests() {
+    public synchronized boolean hasMoreRequests() {
         return !requestQueue.isEmpty();
+    }
+    
+    public void displayQueue() {
+        // Omitting for brevity in this multithreaded test
     }
 }
