@@ -27,4 +27,14 @@ public class BookingQueueService {
         }
         System.out.println("------------------------------------------\n");
     }
+
+    // Retrieves and removes the next request from the front of the queue
+    public Reservation getNextRequest() {
+        return requestQueue.poll(); 
+    }
+
+    // Checks if there is anyone left in the queue
+    public boolean hasMoreRequests() {
+        return !requestQueue.isEmpty();
+    }
 }
