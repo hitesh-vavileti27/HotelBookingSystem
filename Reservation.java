@@ -1,4 +1,4 @@
-public class Reservation {
+public class Reservation implements java.io.Serializable {
     private String guestName;
     private String requestedRoomType;
     private String assignedRoomId; 

@@ -1,47 +1,46 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class HotelBookingApp {
 
     public static void main(String[] args) {
-        
-        System.out.println("****************************************");
-        System.out.println("  Welcome to the Hotel Booking System!  ");
-        System.out.println("****************************************\n");
+        System.out.println("--- DURABLE HOTEL SYSTEM ---\n");
 
-        Room singleRoom = new SingleRoom();
-        RoomInventory inventory = new RoomInventory();
-        
-        // DANGER: Only 2 rooms available!
-        inventory.registerRoom(singleRoom.getRoomType(), 2);
+        PersistenceService persistence = new PersistenceService();
+        RoomInventory inventory;
+        List<Reservation> history;
 
-        BookingQueueService queueService = new BookingQueueService();
-        RoomAllocationService allocationService = new RoomAllocationService();
+        // 1. ATTEMPT RECOVERY
+        Object[] recoveredData = persistence.loadSystemState();
 
-        // 1. 5 Guests all click "Book" at the same time
-        System.out.println("--- MASSIVE USER SURGE (5 Guests, 2 Rooms) ---");
-        queueService.addBookingRequest(new Reservation("Alice", singleRoom.getRoomType()));
-        queueService.addBookingRequest(new Reservation("Bob", singleRoom.getRoomType()));
-        queueService.addBookingRequest(new Reservation("Charlie", singleRoom.getRoomType()));
-        queueService.addBookingRequest(new Reservation("Dave", singleRoom.getRoomType()));
-        queueService.addBookingRequest(new Reservation("Eve", singleRoom.getRoomType()));
-
-        System.out.println("\n--- STARTING CONCURRENT PROCESSORS ---");
-        
-        // 2. Spin up 3 independent threads to process the queue simultaneously
-        Thread t1 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-1");
-        Thread t2 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-2");
-        Thread t3 = new Thread(new ConcurrentBookingProcessor(queueService, allocationService, inventory), "Thread-3");
-
-        t1.start();
-        t2.start();
-        t3.start();
-
-        // 3. Wait for all threads to finish their work before printing the final inventory
-        try {
-            t1.join(); t2.join(); t3.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (recoveredData != null) {
+            inventory = (RoomInventory) recoveredData[0];
+            history = (List<Reservation>) recoveredData[1];
+        } else {
+            // 2. INITIALIZE FRESH (If no file exists)
+            inventory = new RoomInventory();
+            inventory.registerRoom("Single Room", 5);
+            history = new ArrayList<>();
         }
 
-        System.out.println("\n--- FINAL SYSTEM STATE ---");
-        inventory.displayInventory();
+        // 3. SHOW CURRENT STATE
+        System.out.println("Current Inventory: " + inventory.getAvailability("Single Room"));
+        System.out.println("History Count: " + history.size());
+
+        // 4. PERFORM A NEW ACTION (If Alice isn't already there)
+        if (history.isEmpty()) {
+            System.out.println("\n[Action] First run: Booking for Alice...");
+            Reservation alice = new Reservation("Alice", "Single Room");
+            alice.setAssignedRoomId("SR-101");
+            inventory.updateAvailability("Single Room", 4);
+            history.add(alice);
+            
+            // 5. PERSIST DATA
+            persistence.saveSystemState(inventory, history);
+            System.out.println("[System] Alice is saved. Now STOP the app and run it again!");
+        } else {
+            System.out.println("\n[Success] DATA PERSISTED! Alice is still here from the previous run.");
+            System.out.println("Last Guest: " + history.get(0).getGuestName());
+        }
     }
 }

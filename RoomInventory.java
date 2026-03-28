@@ -1,7 +1,7 @@
 import java.util.HashMap;
 import java.util.Map;
 
-public class RoomInventory {
+public class RoomInventory implements java.io.Serializable {
     private Map<String, Integer> inventory;
 
     public RoomInventory() {
