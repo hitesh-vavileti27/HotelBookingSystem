@@ -1,29 +1,39 @@
 /**
  * The main entry point for the Hotel Booking application.
- * This class acts as a container for application behavior and 
- * marks the logical boundary of the program.
- *
- * @author Your Name
- * @version 1.0
+ * Updated for Use Case 2: Demonstrating Inheritance, Abstraction, and State.
  */
 public class HotelBookingApp {
 
-    /**
-     * The main method acts as the entry point of the standalone Java application.
-     * The JVM specifically looks for this method signature to begin execution.
-     * * @param args Command line arguments passed to the application.
-     */
     public static void main(String[] args) {
         
-        // Execution proceeds top to bottom (Application Flow)
-        
-        // Using System.out.println() to send text output to the console
         System.out.println("****************************************");
         System.out.println("  Welcome to the Hotel Booking System!  ");
-        System.out.println("****************************************");
-        System.out.println("Application Name: Hotel Booking App");
-        System.out.println("Version: v1.0");
+        System.out.println("****************************************\n");
+
+        // 1. Initialize room objects using Polymorphism
+        // The reference type is 'Room', but the actual object is a specific subclass
+        Room singleRoom = new SingleRoom();
+        Room doubleRoom = new DoubleRoom();
+        Room suiteRoom = new SuiteRoom();
+
+        // 2. Store availability using simple variables (Static Availability Representation)
+        int availableSingles = 5;
+        int availableDoubles = 3;
+        int availableSuites = 2;
+
+        // 3. Display room details and availability to the console
+        System.out.println("--- AVAILABLE ROOM TYPES ---");
         
-        // The application naturally terminates here when it reaches the end of the main method
+        singleRoom.displayDetails();
+        System.out.println("  Currently Available: " + availableSingles + "\n");
+        
+        doubleRoom.displayDetails();
+        System.out.println("  Currently Available: " + availableDoubles + "\n");
+        
+        suiteRoom.displayDetails();
+        System.out.println("  Currently Available: " + availableSuites + "\n");
+
+        System.out.println("****************************************");
+        System.out.println("Thank you for checking our inventory.");
     }
 }
