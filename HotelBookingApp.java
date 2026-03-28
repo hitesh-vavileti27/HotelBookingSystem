@@ -9,7 +9,6 @@ public class HotelBookingApp {
         Room singleRoom = new SingleRoom();
         Room suiteRoom = new SuiteRoom();
 
-        // Initialize Inventory: 5 Singles, 1 Suite
         RoomInventory inventory = new RoomInventory();
         inventory.registerRoom(singleRoom.getRoomType(), 5);
         inventory.registerRoom(suiteRoom.getRoomType(), 1);
@@ -17,20 +16,28 @@ public class HotelBookingApp {
         BookingQueueService queueService = new BookingQueueService();
         RoomAllocationService allocationService = new RoomAllocationService();
 
-        System.out.println("--- SIMULATING PEAK DEMAND INTAKE ---");
-        queueService.addBookingRequest(new Reservation("Alice", singleRoom.getRoomType()));
-        queueService.addBookingRequest(new Reservation("Bob", suiteRoom.getRoomType()));
+        // 1. Intake
+        System.out.println("--- INTAKE ---");
+        Reservation bobRequest = new Reservation("Bob", suiteRoom.getRoomType());
+        queueService.addBookingRequest(bobRequest);
         
-        // Charlie tries to book a suite, but Bob is ahead of him in the queue!
-        queueService.addBookingRequest(new Reservation("Charlie", suiteRoom.getRoomType())); 
-
-        queueService.displayQueue();
-
-        // Process the queue and allocate rooms
+        // 2. Process Allocation
         allocationService.processQueue(queueService, inventory);
 
-        // Display final states
-        inventory.displayInventory();
-        allocationService.displayAllocations();
+        // 3. Add-On Services Phase
+        // We only allow add-ons if Bob actually got a room assigned!
+        if (bobRequest.getAssignedRoomId() != null) {
+            System.out.println("\n[Guest] Bob is adding optional services to his reservation...");
+            
+            AddOnManager addOnManager = new AddOnManager();
+            String bobsRoomId = bobRequest.getAssignedRoomId();
+
+            // Bob selects his add-ons
+            addOnManager.addServiceToReservation(bobsRoomId, new BreakfastAddOn());
+            addOnManager.addServiceToReservation(bobsRoomId, new SpaAddOn());
+
+            // Display his final add-on bill
+            addOnManager.displayAddOns(bobsRoomId);
+        }
     }
 }
