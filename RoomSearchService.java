@@ -4,11 +4,6 @@
  */
 public class RoomSearchService {
 
-    /**
-     * Displays available rooms by cross-referencing domain objects with inventory state.
-     * * @param allRooms Array of all room types in the system.
-     * @param inventory The centralized inventory to check for availability.
-     */
     public void searchAvailableRooms(Room[] allRooms, RoomInventory inventory) {
         System.out.println("\n--- GUEST ROOM SEARCH RESULTS ---");
         boolean foundAvailable = false;

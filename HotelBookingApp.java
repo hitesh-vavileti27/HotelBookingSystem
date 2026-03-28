@@ -1,29 +1,45 @@
 /**
  * The main entry point for the Hotel Booking application.
- * This class acts as a container for application behavior and 
- * marks the logical boundary of the program.
- *
- * @author Your Name
- * @version 1.0
+ * Updated for Use Case 4: Read-Only Search Service and Validation.
  */
 public class HotelBookingApp {
 
-    /**
-     * The main method acts as the entry point of the standalone Java application.
-     * The JVM specifically looks for this method signature to begin execution.
-     * * @param args Command line arguments passed to the application.
-     */
     public static void main(String[] args) {
         
-        // Execution proceeds top to bottom (Application Flow)
-        
-        // Using System.out.println() to send text output to the console
         System.out.println("****************************************");
         System.out.println("  Welcome to the Hotel Booking System!  ");
-        System.out.println("****************************************");
-        System.out.println("Application Name: Hotel Booking App");
-        System.out.println("Version: v1.0");
+        System.out.println("****************************************\n");
+
+        // 1. Initialize Domain Objects
+        Room singleRoom = new SingleRoom();
+        Room doubleRoom = new DoubleRoom();
+        Room suiteRoom = new SuiteRoom();
         
-        // The application naturally terminates here when it reaches the end of the main method
+        // Group rooms into an array
+        Room[] hotelRooms = { singleRoom, doubleRoom, suiteRoom };
+
+        // 2. Initialize Centralized Inventory
+        RoomInventory inventory = new RoomInventory();
+        inventory.registerRoom(singleRoom.getRoomType(), 5);
+        inventory.registerRoom(doubleRoom.getRoomType(), 3);
+        inventory.registerRoom(suiteRoom.getRoomType(), 1); // Only 1 Suite available
+
+        // 3. Initialize Search Service
+        RoomSearchService searchService = new RoomSearchService();
+
+        // 4. Guest initiates a search
+        System.out.println("[Guest] Searching for available rooms...");
+        searchService.searchAvailableRooms(hotelRooms, inventory);
+
+        // 5. Simulate booking the LAST available Suite
+        System.out.println("\n[System] Booking 1 Suite Room...");
+        int currentSuiteCount = inventory.getAvailability(suiteRoom.getRoomType());
+        inventory.updateAvailability(suiteRoom.getRoomType(), currentSuiteCount - 1);
+        System.out.println("[System] Booking confirmed. Suite inventory updated.");
+
+        // 6. Guest initiates another search
+        System.out.println("\n[Guest] Searching for available rooms again...");
+        // The search service should now automatically filter out the Suite Room!
+        searchService.searchAvailableRooms(hotelRooms, inventory);
     }
 }
