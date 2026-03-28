@@ -21,6 +21,9 @@ public class RoomInventory {
             inventory.put(roomType, newCount);
         }
     }
+    public boolean hasRoomType(String roomType) {
+        return inventory.containsKey(roomType);
+    }
 
     public void displayInventory() {
         System.out.println("\n--- CURRENT ROOM INVENTORY ---");

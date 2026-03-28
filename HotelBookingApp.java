@@ -11,39 +11,42 @@ public class HotelBookingApp {
 
         RoomInventory inventory = new RoomInventory();
         inventory.registerRoom(singleRoom.getRoomType(), 5);
-        inventory.registerRoom(suiteRoom.getRoomType(), 1); // Only 1 suite!
+        inventory.registerRoom(suiteRoom.getRoomType(), 1);
 
-        BookingQueueService queueService = new BookingQueueService();
-        RoomAllocationService allocationService = new RoomAllocationService();
-        
-        // Initialize our new historical and reporting services
-        BookingHistory bookingHistory = new BookingHistory();
-        BookingReportService reportService = new BookingReportService();
+        InvalidBookingValidator validator = new InvalidBookingValidator();
 
-        // 1. Create incoming requests
-        Reservation req1 = new Reservation("Alice", singleRoom.getRoomType());
-        Reservation req2 = new Reservation("Bob", suiteRoom.getRoomType());
-        Reservation req3 = new Reservation("Charlie", suiteRoom.getRoomType()); // Charlie will fail
-        
-        Reservation[] allRequests = { req1, req2, req3 };
+        System.out.println("--- PROCESSING BOOKINGS WITH VALIDATION ---\n");
 
-        System.out.println("--- SIMULATING INTAKE ---");
-        for (Reservation req : allRequests) {
-            queueService.addBookingRequest(req);
+        // Scenario 1: A Perfectly Valid Booking (Happy Path)
+        Reservation aliceReq = new Reservation("Alice", singleRoom.getRoomType());
+        try {
+            validator.validateRequest(aliceReq, inventory);
+            System.out.println("[Success] " + aliceReq.getGuestName() + "'s request for a " + aliceReq.getRequestedRoomType() + " is valid!");
+        } catch (InvalidBookingException e) {
+            System.out.println("[Error] " + e.getMessage());
         }
 
-        // 2. Process the queue and allocate rooms
-        allocationService.processQueue(queueService, inventory);
-
-        // 3. Archive only the SUCCESSFUL bookings into history
-        System.out.println("--- ARCHIVING CONFIRMED BOOKINGS ---");
-        for (Reservation req : allRequests) {
-            if (req.getAssignedRoomId() != null) { // If it has a Room ID, it was confirmed
-                bookingHistory.addRecord(req);
-            }
+        // Scenario 2: Invalid Booking - Guest asks for a room that doesn't exist
+        Reservation eveReq = new Reservation("Eve", "Penthouse Suite");
+        try {
+            validator.validateRequest(eveReq, inventory);
+            System.out.println("[Success] " + eveReq.getGuestName() + "'s request is valid!");
+        } catch (InvalidBookingException e) {
+            System.out.println("[Gracefully Caught Error] " + e.getMessage());
         }
 
-        // 4. Admin requests the end-of-day report
-        reportService.generateSummaryReport(bookingHistory);
+        // Scenario 3: Invalid Booking - Guest asks for a sold-out room
+        Reservation daveReq = new Reservation("Dave", suiteRoom.getRoomType());
+        try {
+            // Let's manually drain the suite inventory to simulate it being sold out
+            inventory.updateAvailability(suiteRoom.getRoomType(), 0);
+            
+            validator.validateRequest(daveReq, inventory);
+            System.out.println("[Success] " + daveReq.getGuestName() + "'s request is valid!");
+        } catch (InvalidBookingException e) {
+            System.out.println("[Gracefully Caught Error] " + e.getMessage());
+        }
+
+        System.out.println("\n[System] Application finishes running smoothly because all errors were handled gracefully!");
     }
 }
