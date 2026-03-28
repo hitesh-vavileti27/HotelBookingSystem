@@ -11,33 +11,39 @@ public class HotelBookingApp {
 
         RoomInventory inventory = new RoomInventory();
         inventory.registerRoom(singleRoom.getRoomType(), 5);
-        inventory.registerRoom(suiteRoom.getRoomType(), 1);
+        inventory.registerRoom(suiteRoom.getRoomType(), 1); // Only 1 suite!
 
         BookingQueueService queueService = new BookingQueueService();
         RoomAllocationService allocationService = new RoomAllocationService();
-
-        // 1. Intake
-        System.out.println("--- INTAKE ---");
-        Reservation bobRequest = new Reservation("Bob", suiteRoom.getRoomType());
-        queueService.addBookingRequest(bobRequest);
         
-        // 2. Process Allocation
+        // Initialize our new historical and reporting services
+        BookingHistory bookingHistory = new BookingHistory();
+        BookingReportService reportService = new BookingReportService();
+
+        // 1. Create incoming requests
+        Reservation req1 = new Reservation("Alice", singleRoom.getRoomType());
+        Reservation req2 = new Reservation("Bob", suiteRoom.getRoomType());
+        Reservation req3 = new Reservation("Charlie", suiteRoom.getRoomType()); // Charlie will fail
+        
+        Reservation[] allRequests = { req1, req2, req3 };
+
+        System.out.println("--- SIMULATING INTAKE ---");
+        for (Reservation req : allRequests) {
+            queueService.addBookingRequest(req);
+        }
+
+        // 2. Process the queue and allocate rooms
         allocationService.processQueue(queueService, inventory);
 
-        // 3. Add-On Services Phase
-        // We only allow add-ons if Bob actually got a room assigned!
-        if (bobRequest.getAssignedRoomId() != null) {
-            System.out.println("\n[Guest] Bob is adding optional services to his reservation...");
-            
-            AddOnManager addOnManager = new AddOnManager();
-            String bobsRoomId = bobRequest.getAssignedRoomId();
-
-            // Bob selects his add-ons
-            addOnManager.addServiceToReservation(bobsRoomId, new BreakfastAddOn());
-            addOnManager.addServiceToReservation(bobsRoomId, new SpaAddOn());
-
-            // Display his final add-on bill
-            addOnManager.displayAddOns(bobsRoomId);
+        // 3. Archive only the SUCCESSFUL bookings into history
+        System.out.println("--- ARCHIVING CONFIRMED BOOKINGS ---");
+        for (Reservation req : allRequests) {
+            if (req.getAssignedRoomId() != null) { // If it has a Room ID, it was confirmed
+                bookingHistory.addRecord(req);
+            }
         }
+
+        // 4. Admin requests the end-of-day report
+        reportService.generateSummaryReport(bookingHistory);
     }
 }
