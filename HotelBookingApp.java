@@ -7,46 +7,38 @@ public class HotelBookingApp {
         System.out.println("****************************************\n");
 
         Room singleRoom = new SingleRoom();
-        Room suiteRoom = new SuiteRoom();
-
         RoomInventory inventory = new RoomInventory();
         inventory.registerRoom(singleRoom.getRoomType(), 5);
-        inventory.registerRoom(suiteRoom.getRoomType(), 1);
 
-        InvalidBookingValidator validator = new InvalidBookingValidator();
+        BookingQueueService queueService = new BookingQueueService();
+        RoomAllocationService allocationService = new RoomAllocationService();
+        CancellationService cancellationService = new CancellationService();
 
-        System.out.println("--- PROCESSING BOOKINGS WITH VALIDATION ---\n");
-
-        // Scenario 1: A Perfectly Valid Booking (Happy Path)
+        // 1. Book a room
+        System.out.println("--- BOOKING PHASE ---");
         Reservation aliceReq = new Reservation("Alice", singleRoom.getRoomType());
+        queueService.addBookingRequest(aliceReq);
+        allocationService.processQueue(queueService, inventory);
+        
+        inventory.displayInventory(); // Should be 4 Singles left
+
+        // 2. Cancel the room (Happy Path)
+        System.out.println("\n--- CANCELLATION PHASE ---");
         try {
-            validator.validateRequest(aliceReq, inventory);
-            System.out.println("[Success] " + aliceReq.getGuestName() + "'s request for a " + aliceReq.getRequestedRoomType() + " is valid!");
+            cancellationService.cancelReservation(aliceReq, inventory);
         } catch (InvalidBookingException e) {
             System.out.println("[Error] " + e.getMessage());
         }
 
-        // Scenario 2: Invalid Booking - Guest asks for a room that doesn't exist
-        Reservation eveReq = new Reservation("Eve", "Penthouse Suite");
+        inventory.displayInventory(); // Should be back to 5 Singles!
+        cancellationService.displayReleasedRooms(); // Should show Alice's released room ID
+
+        // 3. Attempt to double-cancel the room (Error Handling)
+        System.out.println("\n--- ATTEMPTING DOUBLE CANCELLATION ---");
         try {
-            validator.validateRequest(eveReq, inventory);
-            System.out.println("[Success] " + eveReq.getGuestName() + "'s request is valid!");
+            cancellationService.cancelReservation(aliceReq, inventory);
         } catch (InvalidBookingException e) {
             System.out.println("[Gracefully Caught Error] " + e.getMessage());
         }
-
-        // Scenario 3: Invalid Booking - Guest asks for a sold-out room
-        Reservation daveReq = new Reservation("Dave", suiteRoom.getRoomType());
-        try {
-            // Let's manually drain the suite inventory to simulate it being sold out
-            inventory.updateAvailability(suiteRoom.getRoomType(), 0);
-            
-            validator.validateRequest(daveReq, inventory);
-            System.out.println("[Success] " + daveReq.getGuestName() + "'s request is valid!");
-        } catch (InvalidBookingException e) {
-            System.out.println("[Gracefully Caught Error] " + e.getMessage());
-        }
-
-        System.out.println("\n[System] Application finishes running smoothly because all errors were handled gracefully!");
     }
 }
